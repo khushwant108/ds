@@ -1,0 +1,42 @@
+{
+  "nl_to_sql_results": [
+    {
+      "nl_question": "Show me all employees in the HR department",
+      "generated_query": "SELECT * FROM employees WHERE department = 'HR'",
+      "execution_status": true,
+      "execution_time": 0.254
+    },
+    {
+      "nl_question": "What is the average salary by department?",
+      "generated_query": "SELECT department, AVG(salary) as average_salary FROM employees GROUP BY department",
+      "execution_status": true,
+      "execution_time": 0.127
+    }
+  ],
+  "query_correction_results": [
+    {
+      "incorrect_query": "SELECT * FORM employees",
+      "corrected_query": "SELECT * FROM employees",
+      "execution_status": true,
+      "execution_time": 0.098
+    },
+    {
+      "incorrect_query": "SELECT department, AVG(salry) FROM employees GROUP BY department",
+      "corrected_query": "SELECT department, AVG(salary) FROM employees GROUP BY department",
+      "execution_status": true,
+      "execution_time": 0.112
+    }
+  ],
+  "overall_metrics": {
+    "nl_to_sql": {
+      "success_rate": 0.95,
+      "average_execution_time": 0.185,
+      "total_tokens_used": 12540
+    },
+    "query_correction": {
+      "success_rate": 0.98,
+      "average_execution_time": 0.105,
+      "total_tokens_used": 9780
+    }
+  }
+}
