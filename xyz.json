@@ -1,0 +1,75 @@
+{
+    "imports": [
+      "import pandas as pd",
+      "from transformers import T5Tokenizer, T5ForConditionalGeneration",
+      "from sqlalchemy import create_engine",
+      "import groq"
+    ],
+    "models": {
+      "nl_to_sql_model": "T5ForConditionalGeneration.from_pretrained('t5-small')",
+      "query_correction_model": "T5ForConditionalGeneration.from_pretrained('t5-small')",
+      "tokenizer": "T5Tokenizer.from_pretrained('t5-small')"
+    },
+    "database": {
+      "connection": "postgresql://username:password@localhost:5432/database_name"
+    },
+    "functions": [
+      {
+        "name": "generate_sql",
+        "description": "Generate SQL query from natural language input.",
+        "parameters": ["natural_language_query"],
+        "code": "inputs = tokenizer(natural_language_query, return_tensors='pt', padding=True, truncation=True)\noutputs = nl_to_sql_model.generate(**inputs)\nsql_query = tokenizer.decode(outputs[0], skip_special_tokens=True)\nreturn sql_query"
+      },
+      {
+        "name": "correct_sql",
+        "description": "Correct an SQL query.",
+        "parameters": ["incorrect_sql_query"],
+        "code": "inputs = tokenizer(incorrect_sql_query, return_tensors='pt', padding=True, truncation=True)\noutputs = query_correction_model.generate(**inputs)\ncorrected_sql = tokenizer.decode(outputs[0], skip_special_tokens=True)\nreturn corrected_sql"
+      },
+      {
+        "name": "execute_query",
+        "description": "Execute SQL query on PostgreSQL.",
+        "parameters": ["sql_query"],
+        "code": "try:\n    result = engine.execute(sql_query)\n    return result.fetchall()\nexcept Exception as e:\n    return f'Error executing query: {e}'"
+      },
+      {
+        "name": "train_nl_to_sql_model",
+        "description": "Train the NL to SQL model using the provided dataset.",
+        "parameters": [],
+        "code": "df = pd.read_csv('train_generate_task.csv')\ninputs = tokenizer(df['NL'].tolist(), return_tensors='pt', padding=True, truncation=True)\nlabels = tokenizer(df['Query'].tolist(), return_tensors='pt', padding=True, truncation=True)\nmodel.train()\noutputs = model(input_ids=inputs['input_ids'], labels=labels['input_ids'])\nloss = outputs.loss\nmodel.save_pretrained('train_generate_task.json')\ntokenizer.save_pretrained('train_generate_task.json')"
+      },
+      {
+        "name": "train_query_correction_model",
+        "description": "Train the Query Correction model using the provided dataset.",
+        "parameters": [],
+        "code": "df = pd.read_csv('train_query_correction_task.csv')\ninputs = tokenizer(df['IncorrectQuery'].tolist(), return_tensors='pt', padding=True, truncation=True)\nlabels = tokenizer(df['CorrectQuery'].tolist(), return_tensors='pt', padding=True, truncation=True)\nmodel.train()\noutputs = model(input_ids=inputs['input_ids'], labels=labels['input_ids'])\nloss = outputs.loss\nmodel.save_pretrained('train_query_correction_task')\ntokenizer.save_pretrained('train_query_correction_task')"
+      },
+      {
+        "name": "connect_to_postgres",
+        "description": "Connect to PostgreSQL database.",
+        "parameters": [],
+        "code": "engine = create_engine('postgresql://postgress:sql@khush@localhost:5432/Devstrom')\nreturn engine"
+      },
+      {
+        "name": "initialize_groq_client",
+        "description": "Initialize GROQ client with API key.",
+        "parameters": ["api_key"],
+        "code": "client = groq.Client(api_key=api_key)\nreturn client"
+      }
+    ],
+    "example_usage": {
+      "generate_sql": {
+        "natural_language_query": "Show me all users who joined in 2023"
+      },
+      "correct_sql": {
+        "incorrect_sql_query": "SELECT * FROM users WHERE year_joined=2023"
+      },
+      "execute_query": {
+        "sql_query": "SELECT * FROM users WHERE year_joined=2023"
+      }
+    },
+    "installation": [
+      "pip install groq"
+    ]
+  }
+  
